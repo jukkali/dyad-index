@@ -1,0 +1,388 @@
+<title>The Dyad Index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500&display=swap">
+<style>
+  /* Committed light identity — no dark variant by design. All colors explicit. */
+  :root{
+    --ground:#E4EEF6;
+    --surface:#F1F8FC;
+    --raised:#FFFFFF;
+    --ink:#23404F;
+    --ink-2:#51707F;
+    --ink-3:#839CAA;
+    --rule:#C7DCEA;
+    --rule-soft:#DEEBF3;
+    --accent:#2A6B8F;
+    --accent-deep:#1D4F6D;
+    --accent-soft:#D8E9F3;
+    /* Evidence tiers — validated: all six checks pass on white, ΔE ≥ 11.5 CVD */
+    --t-a:#1B7F5A; --t-a-bg:#DDEFE8;
+    --t-b:#3B5FC0; --t-b-bg:#E0E6F9;
+    --t-c:#C08A00; --t-c-bg:#F6EBD2;
+    --t-d:#C3402F; --t-d-bg:#F8E0DC;
+    --shadow:0 1px 2px rgba(35,64,79,.04), 0 10px 30px -18px rgba(35,64,79,.28);
+  }
+  html{background:var(--ground)}
+  body{
+    background:var(--ground);color:var(--ink);
+    font-family:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    font-size:16px;line-height:1.6;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  .wrap{max-width:1020px;margin:0 auto;padding-inline:22px}
+  a{color:var(--accent);text-underline-offset:3px}
+  a:hover{color:var(--accent-deep)}
+  a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+  h1,h2,h3{font-family:"Newsreader",Georgia,serif;font-weight:400;text-wrap:balance;margin:0}
+  h1{font-size:clamp(2rem,4.8vw,3.1rem);line-height:1.12;letter-spacing:-.012em}
+  h2{font-size:clamp(1.4rem,2.9vw,1.95rem);line-height:1.2}
+  h3{font-size:1.08rem;line-height:1.35}
+  p{margin:0}
+  .eyebrow{font-size:.7rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--accent)}
+
+  /* masthead */
+  .masthead{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;
+    background:rgba(228,238,246,.88);backdrop-filter:saturate(1.3) blur(12px);border-bottom:1px solid var(--rule-soft)}
+  .masthead-in{display:flex;align-items:center;gap:20px;padding-block:12px;flex-wrap:wrap}
+  .brand{font-family:"Newsreader",Georgia,serif;font-weight:500;font-size:1.12rem;text-decoration:none;color:var(--ink);margin-right:auto}
+  .stamp{font-size:.76rem;color:var(--ink-3)}
+
+  /* hero */
+  .hero{padding-block:clamp(38px,6vw,64px) 0;display:grid;gap:18px;max-width:54ch}
+  .hero p.lede{font-size:1.1rem;color:var(--ink-2)}
+
+  /* figure shell */
+  .fig{background:var(--raised);border-radius:14px;padding:clamp(20px,3vw,30px);box-shadow:var(--shadow);margin-top:30px}
+  .fig-head{display:flex;justify-content:space-between;gap:16px;align-items:baseline;flex-wrap:wrap;margin-bottom:6px}
+  .fig-title{font-family:"Newsreader",Georgia,serif;font-size:1.3rem;line-height:1.25}
+  .fig-sub{font-size:.9rem;color:var(--ink-2);max-width:62ch;margin-bottom:22px}
+  .fig-note{font-size:.82rem;color:var(--ink-3);margin-top:16px;max-width:64ch}
+  .fig svg{display:block;width:100%;height:auto;max-width:100%;overflow:visible}
+
+  /* legend */
+  .legend{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:.82rem;color:var(--ink-2)}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .swatch{display:inline-block;width:11px;height:11px;border-radius:3px;flex:none}
+
+  /* gap matrix */
+  .matrix{display:grid;grid-template-columns:auto 1fr 1fr;gap:10px;align-items:stretch}
+  .mx-corner{}
+  .mx-col{font-size:.82rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);
+    padding-bottom:4px;display:flex;align-items:flex-end;gap:7px}
+  .mx-row{font-size:.82rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);
+    display:flex;align-items:center;max-width:9ch;line-height:1.3}
+  .cell{border-radius:11px;padding:18px 18px 16px;display:grid;gap:5px;align-content:start;min-height:112px;background:var(--surface)}
+  .cell .n{font-family:"Newsreader",Georgia,serif;font-size:2.1rem;line-height:1}
+  .cell .lbl{font-size:.85rem;color:var(--ink-2)}
+  .cell.filled{background:var(--accent-soft)}
+  .cell.filled .n{color:var(--accent-deep)}
+  .cell.hero-gap{background:transparent;border:2px dashed var(--t-d);display:grid;place-content:center;text-align:center;gap:4px}
+  .cell.hero-gap .n{color:var(--t-d);font-size:2.4rem}
+  .cell.hero-gap .lbl{color:var(--t-d);font-weight:600;font-size:.82rem;letter-spacing:.04em;text-transform:uppercase}
+
+  /* two-up figures */
+  .fig-row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .fig-row .fig{margin-top:0}
+
+  /* accordions */
+  .accordion{margin-top:18px;background:var(--raised);border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+  details{border-bottom:1px solid var(--rule-soft)}
+  details:last-child{border-bottom:none}
+  summary{list-style:none;cursor:pointer;padding:18px clamp(20px,3vw,28px);
+    display:flex;align-items:center;gap:14px;font-size:1.02rem;font-weight:500}
+  summary::-webkit-details-marker{display:none}
+  summary:hover{background:var(--surface)}
+  .sum-count{margin-left:auto;font-size:.8rem;color:var(--ink-3);font-weight:400}
+  .chev{width:11px;height:11px;border-right:1.5px solid var(--ink-3);border-bottom:1.5px solid var(--ink-3);
+    transform:rotate(45deg);transition:transform .2s;flex:none;margin-top:-4px}
+  details[open] .chev{transform:rotate(225deg);margin-top:2px}
+  .acc-body{padding:0 clamp(20px,3vw,28px) 26px}
+
+  /* study rows */
+  .study{padding:16px 0;border-top:1px solid var(--rule-soft);display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start}
+  .study-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:5px}
+  .sub-tag{font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;font-weight:600;padding:3px 9px;border-radius:99px}
+  .sub-tag[data-sub="psilocybin"]{background:var(--t-b-bg);color:var(--t-b)}
+  .sub-tag[data-sub="mdma"]{background:var(--t-c-bg);color:#8A6300}
+  .study-design{font-size:.8rem;color:var(--ink-3)}
+  .study h3{font-size:1.02rem;font-family:"Figtree",sans-serif;font-weight:600}
+  .study p{font-size:.92rem;color:var(--ink-2);margin-top:5px;max-width:62ch}
+  .study .src{font-size:.8rem;color:var(--ink-3);margin-top:5px}
+  .tier-chip{font-size:.7rem;font-weight:600;letter-spacing:.08em;padding:4px 10px;border-radius:99px;white-space:nowrap}
+  .tier-chip[data-g="A"]{background:var(--t-a-bg);color:var(--t-a)}
+  .tier-chip[data-g="B"]{background:var(--t-b-bg);color:var(--t-b)}
+  .tier-chip[data-g="C"]{background:var(--t-c-bg);color:#8A6300}
+  .tier-chip[data-g="D"]{background:var(--t-d-bg);color:var(--t-d)}
+
+  /* generic two-col lists inside accordions */
+  .pairs{display:grid;grid-template-columns:1fr 1fr;gap:16px 26px;padding-top:18px;border-top:1px solid var(--rule-soft)}
+  .pairs h3{font-size:1rem;font-family:"Figtree",sans-serif;font-weight:600;margin-bottom:4px}
+  .pairs p{font-size:.92rem;color:var(--ink-2)}
+  .pairs .risk h3{color:var(--t-d)}
+
+  /* legal tiles */
+  .legal{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding-top:18px;border-top:1px solid var(--rule-soft)}
+  .ltile{background:var(--surface);border-radius:10px;padding:15px 16px;display:grid;gap:6px;align-content:start}
+  .ltile b{font-size:.95rem}
+  .ltile .st{font-size:.67rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:3px 8px;border-radius:99px;justify-self:start}
+  .ltile .st[data-s="medical"]{background:var(--t-a-bg);color:var(--t-a)}
+  .ltile .st[data-s="supervised"]{background:var(--t-b-bg);color:var(--t-b)}
+  .ltile .st[data-s="gap"]{background:var(--t-d-bg);color:var(--t-d)}
+  .ltile p{font-size:.84rem;color:var(--ink-2);line-height:1.5}
+
+  /* tier key */
+  .tierkey{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding-top:18px;border-top:1px solid var(--rule-soft)}
+  .tk{display:grid;gap:5px;align-content:start}
+  .tk b{font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:99px;justify-self:start}
+  .tk p{font-size:.88rem;color:var(--ink-2)}
+
+  /* cta */
+  .cta{margin-top:40px;background:var(--raised);border-radius:16px;padding:clamp(30px,5vw,50px);
+    display:grid;gap:16px;justify-items:center;text-align:center;box-shadow:var(--shadow)}
+  .cta p{color:var(--ink-2);max-width:46ch}
+  .btn{display:inline-block;padding:13px 26px;border-radius:99px;text-decoration:none;font-size:.94rem;font-weight:500;
+    background:var(--accent);color:#FFFFFF;transition:background .18s}
+  .btn:hover{background:var(--accent-deep);color:#FFFFFF}
+
+  footer{margin-top:44px;border-top:1px solid var(--rule);padding-block:26px 44px;
+    display:flex;gap:24px;justify-content:space-between;flex-wrap:wrap}
+  footer p{font-size:.84rem;color:var(--ink-3);max-width:46ch}
+
+  @media (max-width:860px){
+    .fig-row,.legal,.tierkey{grid-template-columns:1fr 1fr}
+    .pairs{grid-template-columns:1fr}
+  }
+  @media (max-width:620px){
+    .matrix{grid-template-columns:1fr 1fr;gap:8px}
+    .mx-corner{display:none}
+    .mx-row{grid-column:1/-1;max-width:none;margin-top:6px}
+    .cell{min-height:96px;padding:14px}
+    .cell .n{font-size:1.8rem}
+    .legal,.tierkey,.fig-row{grid-template-columns:1fr}
+    .study{grid-template-columns:1fr;gap:10px}
+    .tier-chip{justify-self:start}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition-duration:.01ms !important}}
+</style>
+
+<header class="masthead">
+  <div class="wrap masthead-in">
+    <a class="brand" href="#top">The Dyad Index</a>
+    <span class="stamp">Reviewed 17 Sept 2026 &middot; 11 sources</span>
+  </div>
+</header>
+
+<main class="wrap" id="top">
+
+  <section class="hero">
+    <p class="eyebrow">Evidence index &middot; psychedelic-assisted therapy for pairs</p>
+    <h1>What the research really says about psychedelics and the pair.</h1>
+    <p class="lede">Couples, parent&ndash;child, caregiver&ndash;patient, co-founders. Three figures, then the
+      full evidence underneath.</p>
+  </section>
+
+  <!-- FIGURE 1 — the gap -->
+  <figure class="fig">
+    <div class="fig-head"><figcaption class="fig-title">Where the evidence actually sits</figcaption></div>
+    <p class="fig-sub">Cross the compound against the unit being treated, and the field&rsquo;s central hole
+      appears: the dyadic evidence is all MDMA, and psilocybin has never been given to a pair in a trial.</p>
+    <div class="matrix">
+      <div class="mx-corner"></div>
+      <div class="mx-col"><span class="swatch" style="background:#C08A00"></span>MDMA</div>
+      <div class="mx-col"><span class="swatch" style="background:#3B5FC0"></span>Psilocybin</div>
+
+      <div class="mx-row">Treated individually</div>
+      <div class="cell filled">
+        <span class="n">Est.</span>
+        <span class="lbl">Established &mdash; phase 2&ndash;3 PTSD trials</span>
+      </div>
+      <div class="cell filled">
+        <span class="n">7</span>
+        <span class="lbl">studies indexed here, incl. randomised trials</span>
+      </div>
+
+      <div class="mx-row">Treated as a pair</div>
+      <div class="cell filled">
+        <span class="n">3</span>
+        <span class="lbl">studies indexed here &mdash; all small, none randomised</span>
+      </div>
+      <div class="cell hero-gap">
+        <span class="n">0</span>
+        <span class="lbl">No trial exists</span>
+      </div>
+    </div>
+    <p class="fig-note">Retreats offering psilocybin to couples are operating in the empty cell. That is not by
+      itself an argument against them &mdash; supervised practice has outrun trial data before &mdash; but it
+      belongs in the intake conversation.</p>
+  </figure>
+
+  <div class="fig-row" style="margin-top:18px">
+
+    <!-- FIGURE 2 — effect sizes -->
+    <figure class="fig">
+      <div class="fig-head"><figcaption class="fig-title">How large are the effects?</figcaption></div>
+      <p class="fig-sub">Cohen&rsquo;s <em>d</em> from the one dyadic trial, against the null result for microdosing.</p>
+      <svg viewBox="0 0 660 214" role="img" aria-label="Effect sizes: PTSD severity d 1.85 to 3.59; relationship satisfaction d 0.64 to 2.79; microdosing versus placebo, no difference.">
+        <line x1="290" y1="30" x2="290" y2="176" stroke="#839CAA" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="290" y="20" text-anchor="middle" font-family="Figtree,sans-serif" font-size="11" fill="#839CAA">large effect · d = 0.8</text>
+        <g stroke="#DEEBF3" stroke-width="1">
+          <line x1="205" y1="30" x2="205" y2="176"/><line x1="311" y1="30" x2="311" y2="176"/>
+          <line x1="418" y1="30" x2="418" y2="176"/><line x1="524" y1="30" x2="524" y2="176"/>
+          <line x1="630" y1="30" x2="630" y2="176"/>
+        </g>
+        <g font-family="Figtree,sans-serif" font-size="13" fill="#23404F">
+          <text x="0" y="57">PTSD severity</text>
+          <text x="0" y="105">Relationship satisfaction</text>
+          <text x="0" y="153">Microdosing vs. placebo</text>
+        </g>
+        <g font-family="Figtree,sans-serif" font-size="11" fill="#51707F">
+          <text x="494" y="38" text-anchor="middle">d 1.85 – 3.59</text>
+          <text x="387" y="86" text-anchor="middle">d 0.64 – 2.79</text>
+        </g>
+        <rect x="402" y="45" width="184" height="13" rx="6.5" fill="#1B7F5A"/>
+        <rect x="273" y="93" width="228" height="13" rx="6.5" fill="#1B7F5A"/>
+        <circle cx="205" cy="147" r="6" fill="#C3402F" stroke="#FFFFFF" stroke-width="2"/>
+        <text x="220" y="151" font-family="Figtree,sans-serif" font-size="12" fill="#C3402F">no difference from placebo</text>
+        <line x1="205" y1="176" x2="630" y2="176" stroke="#C7DCEA" stroke-width="1"/>
+        <g font-family="Figtree,sans-serif" font-size="11" fill="#839CAA" text-anchor="middle">
+          <text x="205" y="192">0</text><text x="311" y="192">1</text><text x="418" y="192">2</text>
+          <text x="524" y="192">3</text><text x="630" y="192">4</text>
+        </g>
+        <text x="418" y="210" text-anchor="middle" font-family="Figtree,sans-serif" font-size="11" fill="#839CAA">Cohen&#8217;s d</text>
+      </svg>
+      <div class="legend" style="margin-top:14px">
+        <span><i class="swatch" style="background:#1B7F5A"></i>Tier A &mdash; dyadic MDMA trial</span>
+        <span><i class="swatch" style="background:#C3402F"></i>Tier D &mdash; not supported</span>
+      </div>
+      <p class="fig-note">The MDMA figures come from six couples, uncontrolled and unblinded &mdash; read them as
+        a reason to run the trial, not as the trial. Microdosing: 191 people, placebo-controlled.</p>
+    </figure>
+
+    <!-- FIGURE 3 — protocol arc -->
+    <figure class="fig">
+      <div class="fig-head"><figcaption class="fig-title">Where the time actually goes</figcaption></div>
+      <p class="fig-sub">A protocolled dyadic arc, drawn to scale. The dose is the part everyone pictures, and
+        about <strong>1%</strong> of the work.</p>
+      <svg viewBox="0 0 660 172" role="img" aria-label="Protocol timeline to scale: screening about 3 weeks, preparation about 5 weeks, dosing 1 to 2 days, integration about 16 weeks.">
+        <line x1="225" y1="34" x2="225" y2="54" stroke="#C08A00" stroke-width="1.5"/>
+        <text x="225" y="26" text-anchor="middle" font-family="Figtree,sans-serif" font-size="12" font-weight="600" fill="#C08A00">Dosing &middot; 1&ndash;2 days</text>
+        <rect x="10" y="56" width="77" height="34" rx="4" fill="#A8CBE0"/>
+        <rect x="90" y="56" width="129" height="34" rx="4" fill="#6FA6C6"/>
+        <rect x="222" y="56" width="6" height="34" rx="2" fill="#C08A00"/>
+        <rect x="231" y="56" width="419" height="34" rx="4" fill="#2A6B8F"/>
+        <g font-family="Figtree,sans-serif" font-size="12.5" fill="#23404F" font-weight="600">
+          <text x="10" y="116">Screening</text>
+          <text x="90" y="116">Preparation</text>
+          <text x="231" y="116">Integration</text>
+        </g>
+        <g font-family="Figtree,sans-serif" font-size="11.5" fill="#839CAA">
+          <text x="10" y="134">2&ndash;4 weeks</text>
+          <text x="90" y="134">3&ndash;6 sessions</text>
+          <text x="231" y="134">3&ndash;8 sessions, over months</text>
+        </g>
+        <text x="10" y="160" font-family="Figtree,sans-serif" font-size="11" fill="#839CAA">Both partners screened separately &mdash; the dyadic step individual protocols don&#8217;t have.</text>
+      </svg>
+      <p class="fig-note">In every dyadic trial that has worked, the dosing session is the shortest and least
+        therapeutic part of the arc. Integration is where the outcome is decided &mdash; and where the one
+        follow-up signal we have, partial symptom return, says to spend more time.</p>
+    </figure>
+
+  </div>
+
+  <!-- DEPTH -->
+  <div class="accordion">
+
+    <details>
+      <summary><span class="chev"></span>How this index grades evidence<span class="sum-count">4 tiers</span></summary>
+      <div class="acc-body">
+        <div class="tierkey">
+          <div class="tk"><b style="background:var(--t-a-bg);color:var(--t-a)">Tier A</b><p>The pair was the treated unit. Outcomes measured on both partners.</p></div>
+          <div class="tk"><b style="background:var(--t-b-bg);color:var(--t-b)">Tier B</b><p>Trials in individuals that measured or reported relational outcomes.</p></div>
+          <div class="tk"><b style="background:var(--t-c-bg);color:#8A6300">Tier C</b><p>Lab studies of empathy and social cognition; proposed models.</p></div>
+          <div class="tk"><b style="background:var(--t-d-bg);color:var(--t-d)">Tier D</b><p>Widely marketed, and either untested or not upheld against placebo.</p></div>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="chev"></span>The studies<span class="sum-count">11 indexed</span></summary>
+      <div class="acc-body">
+        <div class="study"><div><div class="study-head"><span class="sub-tag" data-sub="mdma">MDMA</span><span class="study-design">2020 &middot; Open trial &middot; 6 couples</span></div><h3>MDMA-facilitated cognitive-behavioural conjoint therapy for PTSD</h3><p>The foundational dyadic study. Both partners dosed; large effects on PTSD and relationship adjustment, no serious adverse events in either partner.</p><p class="src">Monson, Wagner et al. &middot; Eur J Psychotraumatol</p></div><span class="tier-chip" data-g="A">Tier A</span></div>
+        <div class="study"><div><div class="study-head"><span class="sub-tag" data-sub="mdma">MDMA</span><span class="study-design">2021 &middot; Secondary analysis</span></div><h3>Relational and growth outcomes following couples therapy with MDMA</h3><p>Growth, relational support and intimacy improved for both partners; <em>behavioural accommodation</em> and conflict fell &mdash; a property of the relationship that individual therapy cannot reach.</p><p class="src">Wagner et al. &middot; Front Psychiatry 12:702838</p></div><span class="tier-chip" data-g="A">Tier A</span></div>
+        <div class="study"><div><div class="study-head"><span class="sub-tag" data-sub="mdma">MDMA</span><span class="study-design">2024&ndash;25 &middot; Pilot &middot; 8 veteran couples</span></div><h3>MDMA-assisted brief conjoint therapy for PTSD</h3><p>A brief-format replication reporting gains for both partners &mdash; with partial return of symptoms at follow-up, the most important caveat in this literature.</p><p class="src">Protocol: Contemp Clin Trials Commun, 2024 &middot; findings preliminary</p></div><span class="tier-chip" data-g="A">Tier A</span></div>
+        <div class="study"><div><div class="study-head"><span class="sub-tag" data-sub="mdma">MDMA</span><span class="study-design">2021 &middot; Theoretical</span></div><h3>Couple therapy with MDMA &mdash; proposed pathways of action</h3><p>Why a dyad might be the right unit: shared state, reduced defensive avoidance, and a jointly held reference experience both partners can return to.</p><p class="src">Wagner &middot; Front Psychiatry</p></div><span class="tier-chip" data-g="C">Tier C</span></div>
+        <div class="study"><div><div class="study-head"><span class="sub-tag" data-sub="psilocybin">Psilocybin</span><span class="study-design">2017 &middot; Qualitative &middot; n = 20</span></div><h3>Patients&rsquo; accounts of increased connectedness and acceptance</h3><p>Disconnection to connection, avoidance to acceptance. Later operationalised as the Watts Connectedness Scale &mdash; but no partner was assessed.</p><p class="src">Watts, Day, Krzanowski, Nutt &amp; Carhart-Harris &middot; J Humanist Psychol</p></div><span class="tier-chip" data-g="B">Tier B</span></div>
+        <div class="study"><div><div class="study-head"><span class="sub-tag" data-sub="psilocybin">Psilocybin</span><span class="study-design">2017 &middot; Qualitative &middot; n = 13</span></div><h3>Patient experiences of psilocybin-assisted psychotherapy</h3><p>&ldquo;Relational embeddedness&rdquo; emerges as a core theme: forgiveness, encounters with parents and partners, and a strong need to tell the people close to them.</p><p class="src">Belser, Agin-Liebes, Swift et al. &middot; J Humanist Psychol</p></div><span class="tier-chip" data-g="B">Tier B</span></div>
+        <div class="study"><div><div class="study-head"><span class="sub-tag" data-sub="psilocybin">Psilocybin</span><span class="study-design">2016 &middot; Randomised &middot; n = 51</span></div><h3>Sustained decreases in depression and anxiety in life-threatening cancer</h3><p>The evidentiary floor: the individual case is solid, which is exactly what makes the dyadic leap tempting.</p><p class="src">Griffiths et al. &middot; J Psychopharmacol</p></div><span class="tier-chip" data-g="B">Tier B</span></div>
+        <div class="study"><div><div class="study-head"><span class="sub-tag" data-sub="psilocybin">Psilocybin</span><span class="study-design">2017 &middot; Randomised &middot; n = 32</span></div><h3>Effect of psilocybin on empathy and moral decision-making</h3><p>Emotional empathy up; cognitive empathy unchanged. Feeling more <em>with</em> your partner is not the same as understanding them more accurately.</p><p class="src">Pokorny, Preller, Kometer, Dziobek &amp; Vollenweider &middot; Int J Neuropsychopharmacol</p></div><span class="tier-chip" data-g="C">Tier C</span></div>
+        <div class="study"><div><div class="study-head"><span class="sub-tag" data-sub="psilocybin">Psilocybin</span><span class="study-design">2021 &middot; Placebo-controlled &middot; n = 191</span></div><h3>Self-blinding citizen science to explore psychedelic microdosing</h3><p>Microdose and placebo groups improved equally on every outcome. A shared microdosing ritual is a real relational practice &mdash; crediting the alkaloid rather than the ritual gets the story backwards.</p><p class="src">Szigeti, Kartner, Blemings et al. &middot; eLife 10:e62878</p></div><span class="tier-chip" data-g="D">Tier D</span></div>
+        <div class="study"><div><div class="study-head"><span class="sub-tag" data-sub="psilocybin">Psilocybin</span><span class="study-design">Ongoing &middot; Recruiting</span></div><h3>Psilocybin-assisted therapy for PTSD after intimate partner violence</h3><p>Individual delivery, but it treats trauma that originated inside a dyad. Its safety findings will shape who can be admitted to conjoint work.</p><p class="src">ClinicalTrials.gov &middot; NCT06885996</p></div><span class="tier-chip" data-g="B">Tier B</span></div>
+        <div class="study"><div><div class="study-head"><span class="sub-tag" data-sub="psilocybin">Psilocybin</span><span class="study-design">2024 &middot; Review</span></div><h3>Rationale for psychedelic-assisted psychotherapy in caregiver distress</h3><p>The clearest published argument for a non-romantic dyad: caregiver and patient face interlocking demoralisation and role collapse.</p><p class="src">Narrative review &middot; PMC11658675</p></div><span class="tier-chip" data-g="C">Tier C</span></div>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="chev"></span>Risks that exist only because there are two people<span class="sum-count">6</span></summary>
+      <div class="acc-body">
+        <div class="pairs">
+          <div class="risk"><h3>Consent that isn&rsquo;t free</h3><p>One partner wants this; the other agrees to save the relationship. A reluctant partner is an exclusion, not an obstacle to manage.</p></div>
+          <div class="risk"><h3>Suggestibility</h3><p>Psychedelics raise suggestibility. In a dyad the other person in the room has a stake in your insights, and their framing can be absorbed as revelation.</p></div>
+          <div class="risk"><h3>Asymmetric experience</h3><p>One partner has a transformative session, the other a difficult or unremarkable one. Common, and absent from the literature.</p></div>
+          <div class="risk"><h3>The afterglow window</h3><p>Warmth in the weeks after a session is real, and is not structural change. Agree in advance to defer irreversible decisions.</p></div>
+          <div class="risk"><h3>Separation as an outcome</h3><p>Some couples emerge clear that the relationship should end. A programme marketing only repair isn&rsquo;t equipped to hold that.</p></div>
+          <div class="risk"><h3>Contraindications travel</h3><p>One partner&rsquo;s risk disqualifies the pair. Dyadic work has a <em>stricter</em> admission profile than individual work, not a looser one.</p></div>
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="chev"></span>Where this can lawfully happen<span class="sum-count">8 jurisdictions</span></summary>
+      <div class="acc-body">
+        <div class="legal">
+          <div class="ltile"><b>Netherlands</b><span class="st" data-s="gap">Schedule gap</span><p>Mushrooms banned 2008; <em>truffles</em> were never added to the Opium Act. Not a legalisation &mdash; and no medical claims permitted.</p></div>
+          <div class="ltile"><b>Oregon, US</b><span class="st" data-s="supervised">Supervised</span><p>Licensed service centres, consumed on site. Non-medical by design.</p></div>
+          <div class="ltile"><b>Colorado, US</b><span class="st" data-s="supervised">Supervised</span><p>Licensed healing centres, plus decriminalised personal use for adults 21+.</p></div>
+          <div class="ltile"><b>New Mexico, US</b><span class="st" data-s="medical">Medical</span><p>A medical framework created by legislature rather than ballot initiative.</p></div>
+          <div class="ltile"><b>Australia</b><span class="st" data-s="medical">Medical</span><p>Since July 2023, the first country to permit national prescribing &mdash; authorised psychiatrists only.</p></div>
+          <div class="ltile"><b>Czechia</b><span class="st" data-s="medical">Medical</span><p>From January 2026, reported as the first EU state to regulate medical psilocybin.</p></div>
+          <div class="ltile"><b>Switzerland</b><span class="st" data-s="medical">Compassionate</span><p>Exceptional-authorisation permits, granted case by case for over a decade.</p></div>
+          <div class="ltile"><b>Canada</b><span class="st" data-s="medical">Compassionate</span><p>Special Access Programme and individual section 56 exemptions.</p></div>
+        </div>
+        <p class="fig-note">Status changes faster than any page can track &mdash; verify locally. Note that
+          <em>every</em> framework here is written for an individual patient. None contemplates a dyad as the
+          unit of admission.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary><span class="chev"></span>Open questions this index tracks<span class="sum-count">6</span></summary>
+      <div class="acc-body">
+        <div class="pairs">
+          <div><h3>Does psilocybin work dyadically at all?</h3><p>Its more internal, less verbally fluent profile may make it a <em>worse</em> conjoint agent than MDMA, not a better one.</p></div>
+          <div><h3>Dose together, or separately?</h3><p>Every protocol doses both partners at once. Sequential dosing &mdash; one partner sober and holding &mdash; has never been compared.</p></div>
+          <div><h3>Does empathy without accuracy help or harm?</h3><p>More closeness without more understanding could deepen a shared misreading in a conflicted couple.</p></div>
+          <div><h3>How long do relational gains last?</h3><p>The one follow-up signal available suggests the honeymoon question is real and unanswered.</p></div>
+          <div><h3>Do non-romantic dyads respond alike?</h3><p>Parent and adult child, caregiver and patient, co-founders. Only caregiver dyads have even a rationale paper.</p></div>
+          <div><h3>What is the base rate of harm?</h3><p>No dyadic study is powered to detect adverse relational outcomes, and retreats are not collecting them. The most fixable gap here.</p></div>
+        </div>
+      </div>
+    </details>
+
+  </div>
+
+  <section class="cta">
+    <p class="eyebrow">Contribute</p>
+    <h2>This index is only useful if it stays current</h2>
+    <p>Send a study that belongs here, a correction to a grading, or outcome data from a dyadic programme.</p>
+    <a class="btn" href="mailto:info@pixelstorystudio.com?subject=The%20Dyad%20Index%20%E2%80%94%20submission">Submit a study or correction</a>
+  </section>
+
+  <footer>
+    <p><strong>The Dyad Index</strong> &mdash; a graded review of evidence on psychedelic-assisted therapy
+      delivered to pairs. Compiled following training with the Experiential Training Institute, Amsterdam.</p>
+    <p>Summarises published research. Recommends no substance, provider or programme, and is not a substitute for
+      assessment by a qualified clinician. Psilocybin is a controlled substance in most jurisdictions.</p>
+  </footer>
+
+</main>
